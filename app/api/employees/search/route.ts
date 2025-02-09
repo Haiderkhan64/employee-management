@@ -9,7 +9,12 @@ export async function GET(request: Request) {
     const state = searchParams.get("state");
     const country = searchParams.get("country");
 
-    const locationFilter: any = {};
+    // const locationFilter: any = {};
+    const locationFilter: {
+      city?: { contains: string; mode: string };
+      state?: { contains: string; mode: string };
+      country?: { contains: string; mode: string };
+    } = {};
     if (city) locationFilter.city = { contains: city, mode: "insensitive" };
     if (state) locationFilter.state = { contains: state, mode: "insensitive" };
     if (country)
