@@ -2,11 +2,30 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 
+interface Location {
+  id: string | number;
+  city: string;
+  state: string;
+  country: string;
+}
+
+interface EmployeeLocation {
+  location: Location;
+}
+
+interface Employee {
+  id: string | number;
+  fullName: string;
+  jobTitle: string;
+  department: string;
+  locations: EmployeeLocation[];
+}
+
 const EmployeeSearch: React.FC = () => {
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [country, setCountry] = useState("");
-  const [employees, setEmployees] = useState<any[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
@@ -97,7 +116,7 @@ const EmployeeSearch: React.FC = () => {
                 <p className="text-sm text-gray-900">{employee.department}</p>
                 <div className="mt-2">
                   <h4 className="text-md font-medium">Locations:</h4>
-                  {employee.locations.map((location: any) => (
+                  {employee.locations.map((location: EmployeeLocation) => (
                     <div
                       key={location.location.id}
                       className="text-sm text-gray-900"

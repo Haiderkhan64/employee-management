@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+type LocationFilter = {
+  city?: { contains: string; mode: "insensitive" };
+  state?: { contains: string; mode: "insensitive" };
+  country?: { contains: string; mode: "insensitive" };
+};
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -9,12 +15,7 @@ export async function GET(request: Request) {
     const state = searchParams.get("state");
     const country = searchParams.get("country");
 
-    // const locationFilter: any = {};
-    const locationFilter: {
-      city?: { contains: string; mode: string };
-      state?: { contains: string; mode: string };
-      country?: { contains: string; mode: string };
-    } = {};
+    const locationFilter: LocationFilter = {};
     if (city) locationFilter.city = { contains: city, mode: "insensitive" };
     if (state) locationFilter.state = { contains: state, mode: "insensitive" };
     if (country)
