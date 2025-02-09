@@ -19,3 +19,17 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.main {
+  display: flex;
+  background-color: rgb(67, 71, 82);
+  width: 100vw;
+  height: 100vh;
+}
+
+.inside-main {
+  width: 100vw;
+  height: 100vh;
+  justify-content: center;
+  align-content: center;
+}

@@ -1,101 +1,322 @@
-import Image from "next/image";
+"use client";
+import React, { useState } from "react";
+import { useForm, useFieldArray } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { z } from "zod";
 
-export default function Home() {
+//   TODO:  Validation
+const EmployeeSchema = z.object({
+  fullName: z.string().min(2, "Full name must be at least 2 characters"),
+  dateOfBirth: z
+    .string()
+    .refine((val) => !isNaN(Date.parse(val)), "Invalid date"),
+  department: z.string().min(1, "Department is required"),
+  jobTitle: z.string().min(1, "Job title is required"),
+  contacts: z
+    .array(
+      z.object({
+        contactType: z.string().min(1, "Contact type is required"),
+        phoneNumber: z.string().min(1, "Phone number is required"),
+      })
+    )
+    .optional(),
+  locations: z
+    .array(
+      z.object({
+        city: z.string().min(1, "City is required"),
+        state: z.string().min(1, "State is required"),
+        country: z.string().min(1, "Country is required"),
+      })
+    )
+    .optional(),
+});
+
+type EmployeeFormData = z.infer<typeof EmployeeSchema>;
+
+const EmployeeForm: React.FC = () => {
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const {
+    register,
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<EmployeeFormData>({
+    resolver: zodResolver(EmployeeSchema),
+    defaultValues: {
+      contacts: [{ contactType: "", phoneNumber: "" }],
+      locations: [{ city: "", state: "", country: "" }],
+    },
+  });
+
+  const {
+    fields: contactFields,
+    append: appendContact,
+    remove: removeContact,
+  } = useFieldArray({
+    control,
+    name: "contacts",
+  });
+
+  const {
+    fields: locationFields,
+    append: appendLocation,
+    remove: removeLocation,
+  } = useFieldArray({
+    control,
+    name: "locations",
+  });
+
+  const onSubmit = async (data: EmployeeFormData) => {
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const response = await fetch("/api/employees", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Something went wrong");
+      }
+
+      alert("Employee added successfully!");
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error ? error.message : "An unknown error occurred"
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className="main">
+      <div className="inside-main">
+        <div className="max-w-2xl mx-auto p-6 bg-slate-500 shadow-lg rounded-lg border border-gray-200 ">
+          <h2 className="text-2xl font-bold mb-6 text-gray-800">
+            Add New Employee
+          </h2>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Full Name and Date of Birth */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Full Name
+                </label>
+                <input
+                  {...register("fullName")}
+                  placeholder="Full Name"
+                  className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 text-gray-900 ${
+                    errors.fullName
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-gray-300 focus:ring-blue-500"
+                  }`}
+                />
+                {errors.fullName && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.fullName.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Date of Birth
+                </label>
+                <input
+                  type="date"
+                  {...register("dateOfBirth")}
+                  className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 text-gray-900 ${
+                    errors.dateOfBirth
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-gray-300 focus:ring-blue-500"
+                  }`}
+                />
+                {errors.dateOfBirth && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.dateOfBirth.message}
+                  </p>
+                )}
+              </div>
+            </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            {/* Department and Job Title */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Department
+                </label>
+                <select
+                  {...register("department")}
+                  className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 text-gray-900 ${
+                    errors.department
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-gray-300 focus:ring-blue-500"
+                  }`}
+                >
+                  <option value="">Select Department</option>
+                  <option value="HR">Human Resources</option>
+                  <option value="IT">Information Technology</option>
+                  <option value="Finance">Finance</option>
+                  <option value="Sales">Sales</option>
+                </select>
+                {errors.department && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.department.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Job Title
+                </label>
+                <input
+                  {...register("jobTitle")}
+                  placeholder="Job Title"
+                  className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 text-gray-900 ${
+                    errors.jobTitle
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-gray-300 focus:ring-blue-500"
+                  }`}
+                />
+                {errors.jobTitle && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.jobTitle.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Contacts Section */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Contacts
+                </h3>
+                <button
+                  type="button"
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200"
+                  onClick={() =>
+                    appendContact({ contactType: "", phoneNumber: "" })
+                  }
+                >
+                  Add Contact
+                </button>
+              </div>
+              {contactFields.map((field, index) => (
+                <div
+                  key={field.id}
+                  className="grid grid-cols-1 md:grid-cols-3 gap-4"
+                >
+                  <select
+                    {...register(`contacts.${index}.contactType`)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  >
+                    <option value="">Contact Type</option>
+                    <option value="work">Work</option>
+                    <option value="personal">Personal</option>
+                    <option value="emergency">Emergency</option>
+                  </select>
+                  <input
+                    {...register(`contacts.${index}.phoneNumber`)}
+                    placeholder="Phone Number"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  />
+                  {contactFields.length > 1 && (
+                    <button
+                      type="button"
+                      className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition duration-200"
+                      onClick={() => removeContact(index)}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Locations Section */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Locations
+                </h3>
+                <button
+                  type="button"
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200"
+                  onClick={() =>
+                    appendLocation({ city: "", state: "", country: "" })
+                  }
+                >
+                  Add Location
+                </button>
+              </div>
+              {locationFields.map((field, index) => (
+                <div
+                  key={field.id}
+                  className="grid grid-cols-1 md:grid-cols-3 gap-4"
+                >
+                  <input
+                    {...register(`locations.${index}.city`)}
+                    placeholder="City"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  />
+                  <input
+                    {...register(`locations.${index}.state`)}
+                    placeholder="State"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  />
+                  <input
+                    {...register(`locations.${index}.country`)}
+                    placeholder="Country"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Submit Button */}
+            <div>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-green-500 text-white p-3 rounded-lg hover:bg-blue-300 transition duration-200 disabled:bg-gray-400"
+              >
+                {isSubmitting ? "Submitting..." : "Add Employee"}
+              </button>
+            </div>
+
+            <div>
+              <button
+                type="submit"
+                onClick={() => {
+                  router.push("./employees");
+                }}
+                disabled={isSubmitting}
+                className="w-full bg-green-500 text-white p-3 rounded-lg hover:bg-blue-300 transition duration-200 disabled:bg-gray-400"
+              >
+                All Employees
+              </button>
+            </div>
+
+            {/* Error Message */}
+            {submitError && (
+              <div className="text-red-500 text-sm text-center mt-4">
+                {submitError}
+              </div>
+            )}
+          </form>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
     </div>
   );
-}
+};
+export default EmployeeForm;
