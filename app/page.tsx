@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 
-//   TODO:  Validation
 const EmployeeSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   dateOfBirth: z
@@ -101,7 +100,7 @@ const EmployeeForm: React.FC = () => {
   return (
     <div className="main">
       <div className="inside-main">
-        <div className="max-w-2xl mx-auto p-6 bg-slate-500 shadow-lg rounded-lg border border-gray-200 ">
+        <div className="max-w-2xl mx-auto p-6 bg-slate-500 shadow-lg rounded-lg border border-gray-200">
           <h2 className="text-2xl font-bold mb-6 text-gray-800">
             Add New Employee
           </h2>
@@ -262,7 +261,7 @@ const EmployeeForm: React.FC = () => {
               {locationFields.map((field, index) => (
                 <div
                   key={field.id}
-                  className="grid grid-cols-1 md:grid-cols-3 gap-4"
+                  className="grid grid-cols-1 md:grid-cols-4 gap-4"
                 >
                   <input
                     {...register(`locations.${index}.city`)}
@@ -279,6 +278,15 @@ const EmployeeForm: React.FC = () => {
                     placeholder="Country"
                     className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   />
+                  {locationFields.length > 1 && (
+                    <button
+                      type="button"
+                      className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition duration-200"
+                      onClick={() => removeLocation(index)}
+                    >
+                      Remove
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -296,7 +304,7 @@ const EmployeeForm: React.FC = () => {
 
             <div>
               <button
-                type="submit"
+                type="button"
                 onClick={() => {
                   router.push("./employees");
                 }}
@@ -319,4 +327,5 @@ const EmployeeForm: React.FC = () => {
     </div>
   );
 };
+
 export default EmployeeForm;
